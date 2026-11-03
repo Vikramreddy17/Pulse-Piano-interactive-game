@@ -1,0 +1,1690 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0">
+<title>Pulse Piano | Interactive Music Experience</title>
+
+<style>
+:root {
+  --bg:#050b16;
+  --panel:#101b30;
+  --gold:#ffdc77;
+  --cyan:#68e5fa;
+  --white:#f7faff;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+html,body {
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden;
+  background:var(--bg);
+  color:white;
+  font-family:Inter,"Segoe UI",Arial,sans-serif;
+}
+
+button {
+  font:inherit;
+  cursor:pointer;
+}
+
+/* ======================================
+   MAIN APPLICATION
+====================================== */
+
+.app {
+  width:100vw;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:#050b16;
+}
+
+/* ======================================
+   HEADER
+====================================== */
+
+.topbar {
+  min-height:86px;
+  padding:15px 28px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  background:#091322;
+  border-bottom:1px solid #ffffff1b;
+  z-index:20;
+}
+
+.top-left,
+.top-right {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  flex-wrap:wrap;
+}
+
+.logo {
+  width:55px;
+  height:55px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  font-size:31px;
+  font-weight:900;
+  color:#071223;
+  background:linear-gradient(
+    135deg,#61e8fa,#a799ff
+  );
+}
+
+.brand {
+  margin-right:26px;
+  font-size:24px;
+  font-weight:950;
+  letter-spacing:-.7px;
+  white-space:nowrap;
+}
+
+.btn {
+  background:#1b2d47;
+  color:#eef5ff;
+  border:1px solid #3b506e;
+  border-radius:13px;
+  padding:15px 22px;
+  font-size:14px;
+  font-weight:850;
+  transition:.18s ease;
+}
+
+.btn:hover {
+  background:#304966;
+  transform:translateY(-1px);
+}
+
+.btn.selected,
+.btn.primary {
+  border-color:#7be8ff;
+  background:linear-gradient(
+    120deg,#65e2fa,#a3a1ff
+  );
+  color:#061425;
+}
+
+.connection {
+  border:1px solid #354966;
+  border-radius:13px;
+  padding:15px 18px;
+  background:#15243b;
+  color:#ffbf88;
+  font-size:13px;
+  white-space:nowrap;
+}
+
+.connection.online {
+  color:#66f1ae;
+}
+
+.audio-ready {
+  color:#73f1bd;
+}
+
+/* ======================================
+   GAME CONTAINER
+====================================== */
+
+.game-container {
+  position:relative;
+  flex:1;
+  min-height:0;
+  width:100%;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#02060d;
+}
+
+.game {
+  position:relative;
+  isolation:isolate;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:
+    radial-gradient(
+      ellipse at 50% 26%,
+      #244269 0%,
+      #111d34 50%,
+      #071020 100%
+    );
+}
+
+/* ======================================
+   PIANO KEYBOARD
+   149 INCHES / 80 INCHES
+====================================== */
+
+.keyboard {
+  position:absolute;
+  inset:0;
+  display:flex;
+  touch-action:none;
+  z-index:1;
+}
+
+.dead-zone {
+  position:relative;
+  flex:0 0 2.684563758%;
+  z-index:3;
+  background:repeating-linear-gradient(
+    135deg,
+    #4c2d3e 0 12px,
+    #673d50 12px 24px
+  );
+  border-right:2px solid #ee95ac;
+}
+
+.dead-zone.right {
+  border-right:none;
+  border-left:2px solid #ee95ac;
+}
+
+.dead-zone span {
+  position:absolute;
+  bottom:7%;
+  left:50%;
+  writing-mode:vertical-rl;
+  transform:translateX(-50%) rotate(180deg);
+  font-size:clamp(7px,.85vw,13px);
+  font-weight:900;
+  letter-spacing:2px;
+  color:#ffd6e1;
+  white-space:nowrap;
+}
+
+/* ======================================
+   INDIVIDUAL PIANO KEYS
+====================================== */
+
+.piano-key {
+  position:relative;
+  flex:1 1 0;
+  min-width:0;
+  cursor:pointer;
+  user-select:none;
+  border-right:1px solid #ffffff22;
+  background:linear-gradient(
+    180deg,
+    color-mix(in srgb,var(--key),#0a1325 88%),
+    color-mix(in srgb,var(--key),#13243c 65%) 72%,
+    color-mix(in srgb,var(--key),#13243c 40%)
+  );
+  transition:
+    background .12s,
+    filter .12s,
+    box-shadow .12s;
+}
+
+.piano-key::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  right:0;
+  height:10px;
+  background:var(--key);
+}
+
+.piano-key::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    90deg,
+    #ffffff0a,
+    transparent 50%,
+    #00000020
+  );
+}
+
+.piano-key.active {
+  z-index:2;
+  background:linear-gradient(
+    180deg,
+    var(--key),
+    color-mix(in srgb,var(--key),#13243d 27%)
+  );
+  box-shadow:
+    inset 0 0 55px #ffffff70,
+    0 0 65px var(--key);
+  filter:brightness(1.16);
+}
+
+/* ======================================
+   GOLDEN CHALLENGE TARGET
+====================================== */
+
+.piano-key.target {
+  z-index:2;
+}
+
+.piano-key.target .golden-outline {
+  position:absolute;
+  inset:7px;
+  border:5px solid #ffe28a;
+  border-radius:11px;
+  box-shadow:
+    inset 0 0 32px #ffdb7480,
+    0 0 23px #ffda77,
+    0 0 55px #ffda7760;
+  animation:goldenPulse .8s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+
+@keyframes goldenPulse {
+  from {
+    opacity:.55;
+    box-shadow:
+      inset 0 0 15px #ffdb7455,
+      0 0 13px #ffdb77;
+  }
+  to {
+    opacity:1;
+    box-shadow:
+      inset 0 0 45px #ffdb74b0,
+      0 0 35px #ffdb77,
+      0 0 65px #ffdb7760;
+  }
+}
+
+/* ======================================
+   PIANO KEY LABELS
+====================================== */
+
+.key-label {
+  position:absolute;
+  bottom:8%;
+  left:0;
+  right:0;
+  text-align:center;
+  pointer-events:none;
+  z-index:4;
+}
+
+.key-note {
+  display:block;
+  font-size:clamp(18px,3.4vw,58px);
+  font-weight:950;
+  letter-spacing:-2px;
+  text-shadow:0 4px 18px #0009;
+}
+
+.key-zone {
+  display:block;
+  margin-top:12px;
+  font-size:clamp(13px,1.8vw,28px);
+  font-weight:950;
+  color:var(--key);
+  text-shadow:0 3px 12px #0008;
+}
+
+.piano-key.active .key-zone {
+  color:#0e2032;
+}
+
+/* ======================================
+   PROJECTED CHALLENGE OVERLAY
+====================================== */
+
+.song-overlay {
+  position:absolute;
+  z-index:6;
+  top:3%;
+  left:7%;
+  right:7%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:11px;
+  text-align:center;
+  pointer-events:none;
+}
+
+.song-overlay .eyebrow {
+  font-size:clamp(10px,1.15vw,18px);
+  letter-spacing:5px;
+  font-weight:900;
+  color:#8be9fb;
+}
+
+.song-title {
+  margin:0;
+  font-size:clamp(28px,4.8vw,82px);
+  font-weight:950;
+  letter-spacing:-2px;
+  line-height:1;
+  text-shadow:0 8px 35px #000b;
+}
+
+.song-title .accent {
+  color:#ffda7d;
+}
+
+.song-lyric {
+  color:#d9e8ff;
+  font-size:clamp(12px,1.55vw,25px);
+  font-weight:650;
+  text-shadow:0 3px 10px #000b;
+}
+
+.note-sequence {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+  max-width:100%;
+}
+
+.sequence-note {
+  position:relative;
+  min-width:clamp(40px,4.5vw,80px);
+  padding:10px 13px;
+  background:#162740e8;
+  border:1px solid #5c7191;
+  border-radius:12px;
+  font-size:clamp(14px,2.15vw,34px);
+  font-weight:950;
+  color:#f1f6ff;
+  box-shadow:0 7px 20px #0005;
+  transition:.18s ease;
+}
+
+.sequence-note.completed {
+  background:#1a4c3c;
+  border-color:#69e7ae;
+  color:#7bffc5;
+  opacity:.7;
+}
+
+.sequence-note.current {
+  color:#102038;
+  background:linear-gradient(
+    135deg,#ffeba4,#ffc965
+  );
+  border-color:#fff3bd;
+  box-shadow:
+    0 0 22px #ffda77a8,
+    0 0 55px #ffda7740;
+  transform:scale(1.12);
+  animation:noteGlow .75s infinite alternate;
+}
+
+@keyframes noteGlow {
+  from {
+    box-shadow:0 0 12px #ffdb77;
+  }
+  to {
+    box-shadow:
+      0 0 32px #ffdb77,
+      0 0 64px #ffdb774f;
+  }
+}
+
+.next-instruction {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:2px;
+  padding:9px 21px;
+  border:1px solid #ffffff27;
+  border-radius:999px;
+  background:#09172dcc;
+  color:#e0edff;
+  font-size:clamp(11px,1.3vw,20px);
+}
+
+.next-instruction strong {
+  color:#ffdf88;
+}
+
+/* ======================================
+   FREE PLAY SCREEN
+====================================== */
+
+.free-overlay {
+  position:absolute;
+  z-index:5;
+  top:13%;
+  left:5%;
+  right:5%;
+  text-align:center;
+  pointer-events:none;
+}
+
+.free-overlay h1 {
+  margin:0;
+  font-size:clamp(40px,7vw,115px);
+  font-weight:950;
+  letter-spacing:-4px;
+  text-shadow:0 10px 38px #000c;
+}
+
+.free-overlay h1 span {
+  color:#6ce1f5;
+}
+
+.free-overlay p {
+  margin:12px 0;
+  color:#d0e3f4;
+  font-size:clamp(12px,1.6vw,26px);
+}
+
+.now-playing {
+  margin-top:25px;
+  color:#effaff;
+  font-size:clamp(50px,10vw,155px);
+  font-weight:950;
+  text-shadow:0 0 44px #75e5fa85;
+}
+
+.now-playing.bump {
+  animation:notePop .3s ease-out;
+}
+
+@keyframes notePop {
+  0%{transform:scale(.7);opacity:.4}
+  60%{transform:scale(1.13);opacity:1}
+  100%{transform:scale(1)}
+}
+
+/* ======================================
+   PARTICLES + LIDAR CURSOR
+====================================== */
+
+#particleCanvas,
+#cursors {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:8;
+}
+
+.cursor {
+  position:absolute;
+  width:23px;
+  height:23px;
+  border-radius:50%;
+  border:3px solid white;
+  background:#50f2d1;
+  transform:translate(-50%,-50%);
+  box-shadow:
+    0 0 0 8px #50f2d133,
+    0 0 30px #50f2d1;
+}
+
+.cursor span {
+  position:absolute;
+  top:-23px;
+  left:25px;
+  font-size:14px;
+  font-weight:900;
+  text-shadow:0 2px 8px black;
+}
+
+/* ======================================
+   COMPLETION POPUP
+====================================== */
+
+.modal {
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:grid;
+  place-items:center;
+  background:#020612d8;
+  backdrop-filter:blur(14px);
+}
+
+.modal.hidden {
+  display:none;
+}
+
+.modal-content {
+  width:min(520px,90vw);
+  padding:36px;
+  border:1px solid #ffe18e80;
+  border-radius:26px;
+  background:linear-gradient(
+    145deg,#243b5c,#0c172b
+  );
+  text-align:center;
+  box-shadow:0 30px 100px #000b;
+  animation:modalEnter .45s ease-out;
+}
+
+@keyframes modalEnter {
+  from{transform:scale(.8);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.modal-emoji {
+  font-size:70px;
+  animation:celebrate 1.3s infinite alternate;
+}
+
+@keyframes celebrate {
+  from{transform:rotate(-10deg) scale(.9)}
+  to{transform:rotate(10deg) scale(1.12)}
+}
+
+.modal-content h2 {
+  margin:12px 0;
+  font-size:clamp(28px,3vw,46px);
+  color:#ffdf86;
+}
+
+.modal-content p {
+  color:#cbd9ef;
+  line-height:1.7;
+}
+
+.modal-buttons {
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:24px 0;
+}
+
+/* ======================================
+   PROJECTION MODE
+
+   Entire viewport is game.
+   No toolbar, no margins, no black bars.
+====================================== */
+
+body.projection .app {
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100dvh;
+}
+
+body.projection .topbar {
+  display:none;
+}
+
+body.projection .game-container {
+  width:100vw;
+  height:100dvh;
+}
+
+body.projection .game {
+  width:100vw;
+  height:100dvh;
+  border:0;
+  border-radius:0;
+}
+
+body.projection .song-overlay {
+  top:4%;
+}
+
+body.projection .song-title {
+  font-size:clamp(40px,5vw,100px);
+}
+
+body.projection .sequence-note {
+  padding:13px 17px;
+  font-size:clamp(18px,2.6vw,46px);
+}
+
+body.projection .free-overlay {
+  top:14%;
+}
+
+/* ======================================
+   RESPONSIVE DESIGN
+====================================== */
+
+@media(max-width:1000px) {
+  .brand{font-size:17px;margin-right:4px}
+  .topbar{padding:9px}
+  .btn{padding:10px 12px;font-size:12px}
+  .connection{padding:10px;font-size:11px}
+  .logo{width:40px;height:40px}
+  .song-overlay{gap:5px}
+  .sequence-note{padding:6px}
+}
+
+@media(max-height:680px) {
+  .song-overlay{top:2%;gap:5px}
+  .song-title{font-size:clamp(25px,3.5vw,50px)}
+  .song-lyric{font-size:13px}
+  .sequence-note{padding:6px 9px}
+  .next-instruction{padding:6px 13px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- TOP CONTROLS -->
+  <header class="topbar">
+
+    <div class="top-left">
+      <div class="logo">♫</div>
+      <div class="brand">PULSE PIANO</div>
+
+      <button id="freeBtn" class="btn selected">
+        Free Play
+      </button>
+
+      <button id="challengeBtn" class="btn">
+        Birthday Challenge
+      </button>
+    </div>
+
+    <div class="top-right">
+
+      <div id="connection" class="connection">
+        ● LiDAR Disconnected
+      </div>
+
+      <button id="audioBtn" class="btn">
+        Enable Audio
+      </button>
+
+      <button id="projectionBtn" class="btn primary">
+        ⛶ Projection Mode
+      </button>
+
+    </div>
+  </header>
+
+  <!-- FULL GAME AREA -->
+  <main class="game-container">
+    <div id="game" class="game">
+
+      <!-- PIANO KEYS -->
+      <div id="keyboard" class="keyboard"></div>
+
+      <!-- FREE PLAY OVERLAY -->
+      <div id="freeOverlay" class="free-overlay">
+        <h1>MAKE <span>MUSIC.</span></h1>
+        <p>STEP ON A KEY. CREATE YOUR SOUND.</p>
+        <div id="nowPlaying" class="now-playing">♫</div>
+      </div>
+
+      <!-- BIRTHDAY CHALLENGE OVERLAY -->
+      <div id="songOverlay"
+           class="song-overlay"
+           style="display:none">
+
+        <div class="eyebrow">
+          INTERACTIVE MUSIC CHALLENGE
+        </div>
+
+        <h1 class="song-title">
+          HAPPY <span class="accent">BIRTHDAY</span>
+        </h1>
+
+        <div id="songLyric" class="song-lyric">
+          Happy birthday to you!
+        </div>
+
+        <div id="noteSequence"
+             class="note-sequence"></div>
+
+        <div class="next-instruction">
+          <span>NEXT NOTE</span>
+          <strong id="nextNote">G4</strong>
+          <span>·</span>
+          <span id="nextLane">LANE B</span>
+        </div>
+      </div>
+
+      <!-- EFFECTS -->
+      <canvas id="particleCanvas"></canvas>
+      <div id="cursors"></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- REPLAY POPUP -->
+<div id="replayModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-emoji">🎉</div>
+
+    <h2>HAPPY BIRTHDAY!</h2>
+
+    <p>
+      Wonderful performance!
+      Ready to play the melody again?
+    </p>
+
+    <div class="modal-buttons">
+      <button id="replayBtn" class="btn primary">
+        ↻ Play Again
+      </button>
+
+      <button id="backFreeBtn" class="btn">
+        Free Play
+      </button>
+    </div>
+
+    <p id="replayCountdown">
+      Restarting in 6 seconds...
+    </p>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================
+   CONFIGURATION
+========================================= */
+
+const GAME_WIDTH=149;
+const GAME_HEIGHT=80;
+
+const LIDAR_WIDTH=149;
+const LIDAR_HEIGHT=30;
+
+const DEAD_LEFT=4;
+const DEAD_RIGHT=4;
+
+const ACTIVE_WIDTH=GAME_WIDTH-DEAD_LEFT-DEAD_RIGHT;
+const ZONE_WIDTH=ACTIVE_WIDTH/10;
+
+const WS_URL="ws://127.0.0.1:8765";
+
+/* =========================================
+   PIANO NOTES
+========================================= */
+
+const NOTES=[
+  ["A","F4",349.23,"#f7ba78"],
+  ["B","G4",392.00,"#63dbfa"],
+  ["C","A4",440.00,"#b4a1ff"],
+  ["D","B4",493.88,"#6ee9b7"],
+  ["E","C5",523.25,"#ff9eb7"],
+  ["F","D5",587.33,"#88dff7"],
+  ["G","E5",659.25,"#eed388"],
+  ["H","F5",698.46,"#d5a8ff"],
+  ["I","G5",783.99,"#a8eb91"],
+  ["J","A5",880.00,"#ffae92"]
+].map(([zone,note,freq,color])=>({
+  zone,note,freq,color
+}));
+
+const NOTE_MAP=new Map(
+  NOTES.map(n=>[n.note,n])
+);
+
+/* =========================================
+   HAPPY BIRTHDAY SONG
+========================================= */
+
+const SONG=[
+  {
+    lyric:"Happy birthday to you!",
+    notes:["G4","G4","A4","G4","C5","B4"]
+  },
+  {
+    lyric:"Happy birthday to you!",
+    notes:["G4","G4","A4","G4","D5","C5"]
+  },
+  {
+    lyric:"Happy birthday, dear friend!",
+    notes:["G4","G4","G5","E5","C5","B4","A4"]
+  },
+  {
+    lyric:"Happy birthday to you!",
+    notes:["F5","F5","E5","C5","D5","C5"]
+  }
+];
+
+/* =========================================
+   DOM
+========================================= */
+
+const $=id=>document.getElementById(id);
+
+const game=$("game");
+const keyboard=$("keyboard");
+const canvas=$("particleCanvas");
+const ctx=canvas.getContext("2d");
+
+/* =========================================
+   STATE
+========================================= */
+
+let mode="free";
+
+let phraseIndex=0;
+let noteIndex=0;
+
+let songFinished=false;
+
+let audioContext=null;
+let masterGain=null;
+
+let contacts=new Map();
+
+let websocket=null;
+let reconnectTimer=null;
+
+let lastPlayed=new Map();
+let flashTimers=new Map();
+
+let replayTimeout=null;
+let countdownInterval=null;
+
+let particles=[];
+
+let canvasWidth=0;
+let canvasHeight=0;
+let pixelRatio=1;
+
+/* =========================================
+   CREATE 10 PIANO KEYS
+========================================= */
+
+function createKeyboard(){
+  keyboard.innerHTML="";
+
+  const left=document.createElement("div");
+  left.className="dead-zone";
+  left.innerHTML="<span>4 IN DEAD</span>";
+  keyboard.appendChild(left);
+
+  for(const n of NOTES){
+    const key=document.createElement("div");
+
+    key.className="piano-key";
+    key.dataset.zone=n.zone;
+    key.style.setProperty("--key",n.color);
+
+    key.innerHTML=`
+      <div class="golden-outline"></div>
+
+      <div class="key-label">
+        <span class="key-note">${n.note}</span>
+        <span class="key-zone">${n.zone}</span>
+      </div>
+    `;
+
+    keyboard.appendChild(key);
+  }
+
+  const right=document.createElement("div");
+  right.className="dead-zone right";
+  right.innerHTML="<span>4 IN DEAD</span>";
+  keyboard.appendChild(right);
+}
+
+/* =========================================
+   AUDIO ENGINE
+========================================= */
+
+async function enableAudio(){
+  try{
+    if(!audioContext){
+      const AC=window.AudioContext||
+        window.webkitAudioContext;
+
+      if(!AC)throw Error("Web Audio not supported");
+
+      audioContext=new AC();
+
+      masterGain=audioContext.createGain();
+      masterGain.gain.value=.7;
+
+      masterGain.connect(audioContext.destination);
+    }
+
+    if(audioContext.state==="suspended"){
+      await audioContext.resume();
+    }
+
+    $("audioBtn").textContent="Audio Enabled ✓";
+    $("audioBtn").classList.add("audio-ready");
+
+  }catch(error){
+    console.error(error);
+    $("audioBtn").textContent="Audio Error";
+  }
+}
+
+function playSound(n){
+  if(
+    !audioContext||
+    audioContext.state!=="running"
+  )return;
+
+  const time=audioContext.currentTime;
+  const duration=1.15;
+
+  const envelope=audioContext.createGain();
+  const filter=audioContext.createBiquadFilter();
+
+  filter.type="lowpass";
+
+  filter.frequency.setValueAtTime(5400,time);
+
+  filter.frequency.exponentialRampToValueAtTime(
+    1550,time+duration
+  );
+
+  filter.connect(envelope);
+  envelope.connect(masterGain);
+
+  envelope.gain.setValueAtTime(.0001,time);
+
+  envelope.gain.exponentialRampToValueAtTime(
+    .43,time+.012
+  );
+
+  envelope.gain.exponentialRampToValueAtTime(
+    .18,time+.14
+  );
+
+  envelope.gain.exponentialRampToValueAtTime(
+    .0001,time+duration
+  );
+
+  for(const [harmonic,gain] of [
+    [1,.65],
+    [2,.23],
+    [3,.085],
+    [4,.035]
+  ]){
+    const oscillator=audioContext.createOscillator();
+    const partial=audioContext.createGain();
+
+    oscillator.type="sine";
+    oscillator.frequency.value=n.freq*harmonic;
+
+    partial.gain.value=gain;
+
+    oscillator.connect(partial);
+    partial.connect(filter);
+
+    oscillator.start(time);
+    oscillator.stop(time+duration+.03);
+
+    oscillator.onended=()=>{
+      oscillator.disconnect();
+      partial.disconnect();
+    };
+  }
+}
+
+/* =========================================
+   VISUAL NOTE ANIMATION
+========================================= */
+
+function animateKey(n){
+  const key=keyboard.querySelector(
+    `[data-zone="${n.zone}"]`
+  );
+
+  if(!key)return;
+
+  key.classList.add("active");
+
+  clearTimeout(flashTimers.get(n.zone));
+
+  flashTimers.set(n.zone,setTimeout(()=>{
+    key.classList.remove("active");
+    flashTimers.delete(n.zone);
+  },320));
+}
+
+function animateCurrentNote(n){
+  const label=$("nowPlaying");
+
+  label.textContent=n.note;
+  label.style.color=n.color;
+
+  label.classList.remove("bump");
+
+  void label.offsetWidth;
+
+  label.classList.add("bump");
+}
+
+/* =========================================
+   PLAY PIANO NOTE
+========================================= */
+
+function playNote(n){
+  if(!n||songFinished)return;
+
+  const now=performance.now();
+
+  if(
+    now-(lastPlayed.get(n.zone)??-Infinity)<100
+  )return;
+
+  lastPlayed.set(n.zone,now);
+
+  playSound(n);
+  animateKey(n);
+  animateCurrentNote(n);
+  burstParticles(n);
+
+  if(mode==="challenge"){
+    checkChallenge(n);
+  }
+}
+
+/* =========================================
+   GAME MODES
+========================================= */
+
+function cancelReplay(){
+  clearTimeout(replayTimeout);
+  clearInterval(countdownInterval);
+
+  replayTimeout=null;
+  countdownInterval=null;
+
+  $("replayModal").classList.add("hidden");
+}
+
+function selectMode(nextMode){
+  cancelReplay();
+
+  mode=nextMode;
+  phraseIndex=0;
+  noteIndex=0;
+  songFinished=false;
+
+  lastPlayed.clear();
+
+  $("freeBtn").classList.toggle(
+    "selected",mode==="free"
+  );
+
+  $("challengeBtn").classList.toggle(
+    "selected",mode==="challenge"
+  );
+
+  $("freeOverlay").style.display=
+    mode==="free"?"block":"none";
+
+  $("songOverlay").style.display=
+    mode==="challenge"?"flex":"none";
+
+  keyboard.querySelectorAll(".piano-key")
+    .forEach(key=>key.classList.remove("target"));
+
+  if(mode==="free"){
+    $("nowPlaying").textContent="♫";
+    $("nowPlaying").style.color="#f7faff";
+  }else{
+    updateChallengeUI();
+  }
+}
+
+/* =========================================
+   BIRTHDAY CHALLENGE
+========================================= */
+
+function updateChallengeUI(){
+  if(mode!=="challenge"||songFinished)return;
+
+  const phrase=SONG[phraseIndex];
+  const expected=phrase.notes[noteIndex];
+  const target=NOTE_MAP.get(expected);
+
+  $("songLyric").textContent=phrase.lyric;
+
+  $("nextNote").textContent=expected;
+
+  $("nextLane").textContent=
+    "LANE "+target.zone;
+
+  $("noteSequence").innerHTML=
+    phrase.notes.map((note,i)=>{
+      let state="";
+
+      if(i<noteIndex)state="completed";
+      else if(i===noteIndex)state="current";
+
+      return `
+        <span class="sequence-note ${state}">
+          ${note}
+        </span>
+      `;
+    }).join("");
+
+  keyboard.querySelectorAll(".piano-key")
+    .forEach(key=>{
+      key.classList.toggle(
+        "target",
+        key.dataset.zone===target.zone
+      );
+    });
+}
+
+function checkChallenge(n){
+  if(songFinished)return;
+
+  const expected=
+    SONG[phraseIndex].notes[noteIndex];
+
+  if(n.note!==expected){
+    // Incorrect notes still play,
+    // but the challenge does not advance.
+    return;
+  }
+
+  noteIndex++;
+
+  if(
+    noteIndex>=SONG[phraseIndex].notes.length
+  ){
+    phraseIndex++;
+    noteIndex=0;
+  }
+
+  if(phraseIndex>=SONG.length){
+    completeChallenge();
+    return;
+  }
+
+  updateChallengeUI();
+}
+
+/* =========================================
+   CHALLENGE COMPLETION + REPLAY
+========================================= */
+
+function completeChallenge(){
+  songFinished=true;
+
+  keyboard.querySelectorAll(".piano-key")
+    .forEach(key=>key.classList.remove("target"));
+
+  $("songLyric").textContent=
+    "You played the whole song!";
+
+  $("noteSequence").innerHTML="";
+
+  $("nextNote").textContent="♪";
+  $("nextLane").textContent="";
+
+  showReplayModal();
+}
+
+function showReplayModal(){
+  cancelReplay();
+
+  $("replayModal").classList.remove("hidden");
+
+  let remaining=6;
+
+  function updateCountdown(){
+    $("replayCountdown").textContent=
+      `Restarting automatically in ${remaining} seconds...`;
+  }
+
+  updateCountdown();
+
+  countdownInterval=setInterval(()=>{
+    remaining=Math.max(0,remaining-1);
+    updateCountdown();
+  },1000);
+
+  replayTimeout=setTimeout(()=>{
+    restartChallenge();
+  },6000);
+}
+
+function restartChallenge(){
+  selectMode("challenge");
+}
+
+/* =========================================
+   LIDAR COORDINATE MAPPING
+========================================= */
+
+// Game: 149 x 80 inches
+// LiDAR map: 149 x 30 inches
+//
+// X coordinates are identical.
+// Y is scaled for the cursor display.
+
+function lidarToGameY(y){
+  return y/LIDAR_HEIGHT*GAME_HEIGHT;
+}
+
+function zoneAt(x,y){
+  if(
+    !Number.isFinite(x)||
+    !Number.isFinite(y)
+  )return null;
+
+  if(
+    x<DEAD_LEFT||
+    x>=GAME_WIDTH-DEAD_RIGHT||
+    y<0||
+    y>=GAME_HEIGHT
+  )return null;
+
+  const index=Math.floor(
+    (x-DEAD_LEFT)/ZONE_WIDTH
+  );
+
+  return NOTES[index]||null;
+}
+
+/* =========================================
+   LIDAR EVENTS
+========================================= */
+
+function handleLidarEvent(data){
+  if(
+    !data||
+    !["touch_down","touch_move","touch_up"]
+      .includes(data.type)||
+    data.id==null
+  )return;
+
+  const id=String(data.id);
+
+  if(data.type==="touch_up"){
+    contacts.delete(id);
+    renderCursors();
+    return;
+  }
+
+  const x=Number(data.x_inches);
+  const lidarY=Number(data.y_inches);
+
+  if(
+    !Number.isFinite(x)||
+    !Number.isFinite(lidarY)
+  )return;
+
+  const gameY=lidarToGameY(lidarY);
+
+  // The Python server may supply a stable zone
+  // after its zone confirmation and hysteresis.
+  // Prefer that over noisy raw coordinates.
+  const stableZone=
+    typeof data.zone==="string"
+      ?NOTES.find(n=>n.zone===data.zone)
+      :null;
+
+  const note=stableZone||zoneAt(x,gameY);
+  const old=contacts.get(id);
+
+  // Trigger only once per new tracked foot
+  // or when its confirmed zone changes.
+  if(note&&(!old||old.zone!==note.zone)){
+    playNote(note);
+  }
+
+  contacts.set(id,{
+    x,
+    y:gameY,
+    zone:note?.zone||null
+  });
+
+  renderCursors();
+}
+
+function renderCursors(){
+  const holder=$("cursors");
+  holder.innerHTML="";
+
+  for(const [id,p] of contacts){
+    const cursor=document.createElement("div");
+
+    cursor.className="cursor";
+
+    cursor.style.left=
+      p.x/GAME_WIDTH*100+"%";
+
+    cursor.style.top=
+      p.y/GAME_HEIGHT*100+"%";
+
+    const label=document.createElement("span");
+    label.textContent=p.zone||"";
+
+    cursor.appendChild(label);
+    holder.appendChild(cursor);
+  }
+}
+
+/* =========================================
+   WEBSOCKET CONNECTION
+========================================= */
+
+function connectWebSocket(){
+  clearTimeout(reconnectTimer);
+
+  try{
+    websocket=new WebSocket(WS_URL);
+
+    websocket.onopen=()=>{
+      $("connection").textContent=
+        "● LiDAR Connected";
+
+      $("connection").classList.add("online");
+    };
+
+    websocket.onmessage=event=>{
+      try{
+        handleLidarEvent(
+          JSON.parse(event.data)
+        );
+      }catch(error){
+        console.warn("Invalid LiDAR data",error);
+      }
+    };
+
+    websocket.onclose=()=>{
+      $("connection").textContent=
+        "● LiDAR Disconnected";
+
+      $("connection").classList.remove("online");
+
+      contacts.clear();
+      renderCursors();
+
+      reconnectTimer=setTimeout(
+        connectWebSocket,2500
+      );
+    };
+
+    websocket.onerror=()=>{
+      websocket.close();
+    };
+
+  }catch(error){
+    reconnectTimer=setTimeout(
+      connectWebSocket,2500
+    );
+  }
+}
+
+/* =========================================
+   MOUSE INTERACTION
+========================================= */
+
+let pointerDown=false;
+let pointerZone=null;
+
+function noteFromPointer(event){
+  const element=document.elementFromPoint(
+    event.clientX,
+    event.clientY
+  )?.closest(".piano-key");
+
+  return NOTES.find(
+    n=>n.zone===element?.dataset.zone
+  )||null;
+}
+
+function handlePointer(event){
+  const note=noteFromPointer(event);
+  const zone=note?.zone||null;
+
+  if(zone!==pointerZone){
+    pointerZone=zone;
+
+    if(note)playNote(note);
+  }
+}
+
+keyboard.addEventListener("pointerdown",event=>{
+  event.preventDefault();
+
+  enableAudio();
+
+  pointerDown=true;
+  pointerZone=null;
+
+  handlePointer(event);
+
+  try{
+    keyboard.setPointerCapture(event.pointerId);
+  }catch(error){}
+});
+
+keyboard.addEventListener("pointermove",event=>{
+  if(pointerDown){
+    handlePointer(event);
+  }
+});
+
+function releasePointer(){
+  pointerDown=false;
+  pointerZone=null;
+}
+
+keyboard.addEventListener("pointerup",releasePointer);
+keyboard.addEventListener("pointercancel",releasePointer);
+keyboard.addEventListener(
+  "lostpointercapture",releasePointer
+);
+
+/* =========================================
+   KEYBOARD INTERACTION
+========================================= */
+
+document.addEventListener("keydown",event=>{
+  if(
+    event.repeat||
+    event.ctrlKey||
+    event.altKey||
+    event.metaKey
+  )return;
+
+  if(
+    ["INPUT","TEXTAREA","SELECT"]
+      .includes(document.activeElement.tagName)
+  )return;
+
+  const index="1234567890".indexOf(event.key);
+
+  if(index>=0){
+    enableAudio();
+    playNote(NOTES[index]);
+  }
+});
+
+/* =========================================
+   PARTICLE ANIMATIONS
+========================================= */
+
+function resizeCanvas(){
+  const rect=game.getBoundingClientRect();
+
+  canvasWidth=rect.width;
+  canvasHeight=rect.height;
+
+  pixelRatio=Math.min(
+    window.devicePixelRatio||1,2
+  );
+
+  canvas.width=Math.round(canvasWidth*pixelRatio);
+  canvas.height=Math.round(canvasHeight*pixelRatio);
+
+  ctx.setTransform(
+    pixelRatio,0,0,pixelRatio,0,0
+  );
+}
+
+function burstParticles(note){
+  const index=NOTES.indexOf(note);
+
+  const x=canvasWidth*(
+    DEAD_LEFT+(index+.5)*ZONE_WIDTH
+  )/GAME_WIDTH;
+
+  const y=canvasHeight*.65;
+
+  for(let i=0;i<30;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=1+Math.random()*5;
+
+    particles.push({
+      x,y,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed-2,
+      life:1,
+      color:note.color,
+      radius:2+Math.random()*4
+    });
+  }
+}
+
+function animateParticles(){
+  ctx.clearRect(
+    0,0,canvasWidth,canvasHeight
+  );
+
+  particles=particles.filter(
+    p=>p.life>0
+  );
+
+  for(const p of particles){
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=.07;
+    p.life-=.023;
+
+    ctx.globalAlpha=Math.max(0,p.life);
+    ctx.fillStyle=p.color;
+    ctx.shadowColor=p.color;
+    ctx.shadowBlur=18;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,p.y,p.radius,0,Math.PI*2
+    );
+
+    ctx.fill();
+  }
+
+  ctx.globalAlpha=1;
+  ctx.shadowBlur=0;
+
+  requestAnimationFrame(animateParticles);
+}
+
+/* =========================================
+   FULLSCREEN PROJECTION MODE
+========================================= */
+
+async function toggleProjectionMode(){
+  const enable=
+    !document.body.classList.contains("projection");
+
+  document.body.classList.toggle(
+    "projection",enable
+  );
+
+  if(enable){
+    try{
+      await document.documentElement.requestFullscreen();
+    }catch(error){
+      console.warn(
+        "Browser fullscreen not available",error
+      );
+    }
+  }else{
+    if(document.fullscreenElement){
+      try{
+        await document.exitFullscreen();
+      }catch(error){}
+    }
+  }
+
+  resizeCanvas();
+}
+
+document.addEventListener(
+  "fullscreenchange",()=>{
+    if(!document.fullscreenElement){
+      document.body.classList.remove("projection");
+    }
+
+    resizeCanvas();
+  }
+);
+
+/* =========================================
+   CONTROL BUTTONS
+========================================= */
+
+$("freeBtn").onclick=()=>{
+  selectMode("free");
+};
+
+$("challengeBtn").onclick=()=>{
+  selectMode("challenge");
+};
+
+$("audioBtn").onclick=enableAudio;
+
+$("projectionBtn").onclick=()=>{
+  enableAudio();
+  toggleProjectionMode();
+};
+
+$("replayBtn").onclick=restartChallenge;
+
+$("backFreeBtn").onclick=()=>{
+  selectMode("free");
+};
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+createKeyboard();
+
+selectMode("free");
+
+resizeCanvas();
+
+window.addEventListener(
+  "resize",resizeCanvas
+);
+
+requestAnimationFrame(animateParticles);
+
+connectWebSocket();
+
+console.log("Pulse Piano ready.");
+console.log("Game: 149 x 80 inches");
+console.log("LiDAR: 149 x 30 inches");
+
+</script>
+</body>
+</html>
